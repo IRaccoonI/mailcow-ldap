@@ -1,0 +1,573 @@
+openapi: 3.1.0
+info:
+  description: >-
+    mailcow is complete e-mailing solution with advanced antispam, antivirus,
+    nice UI and API.
+
+
+    In order to use this API you have to create a API key and add your IP
+    address to the whitelist of allowed IPs this can be done by logging into the
+    Mailcow UI using your admin account, then go to Configuration > Access >
+    Edit administrator details > API. There you will find a collapsed API menu.
+
+
+    There are two types of API keys
+      - The read only key can only be used for all get endpoints
+      - The read write key can be used for all endpoints
+
+  title: mailcow API
+  version: "1.0.0"
+
+servers:
+  - url: /
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              type:
+                type: string
+                example: error
+              msg:
+                type: string
+                example: authentication failed
+            required:
+              - type
+              - msg
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /api/v1/add/mailbox:
+    post:
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "200":
+          content:
+            application/json:
+              examples:
+                response:
+                  value:
+                    - log:
+                        - mailbox
+                        - add
+                        - mailbox
+                        - active: "1"
+                          domain: domain.tld
+                          local_part: info
+                          name: Full name
+                          password: "*"
+                          password2: "*"
+                          quota: "3072"
+                          force_pw_update: "1"
+                          tls_enforce_in: "1"
+                          tls_enforce_out: "1"
+                          tags: ["tag1", "tag2"]
+                        - null
+                      msg:
+                        - mailbox_added
+                        - info@domain.tld
+                      type: success
+              schema:
+                properties:
+                  log:
+                    description: contains request object
+                    items: {}
+                    type: array
+                  msg:
+                    items: {}
+                    type: array
+                  type:
+                    enum:
+                      - success
+                      - danger
+                      - error
+                    type: string
+                type: object
+          description: OK
+          headers: {}
+      tags:
+        - Mailboxes
+      description: >-
+        You may create your own mailbox using this action. It takes a JSON
+        object containing a domain informations.
+      operationId: Create mailbox
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example:
+                active: "1"
+                domain: domain.tld
+                local_part: info
+                name: Full name
+                password: atedismonsin
+                password2: atedismonsin
+                quota: "3072"
+                force_pw_update: "1"
+                tls_enforce_in: "1"
+                tls_enforce_out: "1"
+                tags: ["tag1", "tag2"]
+              properties:
+                active:
+                  description: is mailbox active or not
+                  type: boolean
+                domain:
+                  description: domain name
+                  type: string
+                local_part:
+                  description: left part of email address
+                  type: string
+                name:
+                  description: Full name of the mailbox user
+                  type: string
+                password2:
+                  description: mailbox password for confirmation
+                  type: string
+                password:
+                  description: mailbox password
+                  type: string
+                quota:
+                  description: mailbox quota
+                  type: number
+                force_pw_update:
+                  description: forces the user to update its password on first login
+                  type: boolean
+                tls_enforce_in:
+                  description: force inbound email tls encryption
+                  type: boolean
+                tls_enforce_out:
+                  description: force oubound tmail tls encryption
+                  type: boolean
+                tags:
+                  type: array
+                  items:
+                    type: string
+              type: object
+      summary: Create mailbox
+
+  /api/v1/delete/mailbox:
+    post:
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "200":
+          content:
+            application/json:
+              examples:
+                response:
+                  value:
+                    - log:
+                        - mailbox
+                        - delete
+                        - mailbox
+                        - username:
+                            - info@domain.tld
+                            - sales@domain.tld
+                        - null
+                      msg:
+                        - mailbox_removed
+                        - info@domain.tld
+                      type: success
+                    - log:
+                        - mailbox
+                        - delete
+                        - mailbox
+                        - username:
+                            - info@domain.tld
+                            - sales@domain.tld
+                        - null
+                      msg:
+                        - mailbox_removed
+                        - sales@domain.tld
+                      type: success
+              schema:
+                properties:
+                  log:
+                    description: contains request object
+                    items: {}
+                    type: array
+                  msg:
+                    items: {}
+                    type: array
+                  type:
+                    enum:
+                      - success
+                      - danger
+                      - error
+                    type: string
+                type: object
+          description: OK
+          headers: {}
+      tags:
+        - Mailboxes
+      description: You can delete one or more mailboxes.
+      operationId: Delete mailbox
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example:
+                - info@domain.tld
+                - sales@domain.tld
+              properties:
+                items:
+                  description: contains list of mailboxes you want to delete
+                  type: object
+              type: object
+      summary: Delete mailbox
+
+  /api/v1/edit/mailbox:
+    post:
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "200":
+          content:
+            application/json:
+              examples:
+                response:
+                  value:
+                    - log:
+                        - mailbox
+                        - edit
+                        - mailbox
+                        - active: "1"
+                          force_pw_update: "0"
+                          name: Full name
+                          password: "*"
+                          password2: "*"
+                          quota: "3072"
+                          sender_acl:
+                            - default
+                            - info@domain2.tld
+                            - domain3.tld
+                            - "*"
+                          sogo_access: "1"
+                          username:
+                            - info@domain.tld
+                          tags: ["tag3", "tag4"]
+                        - null
+                      msg:
+                        - mailbox_modified
+                        - info@domain.tld
+                      type: success
+              schema:
+                properties:
+                  log:
+                    description: contains request object
+                    items: {}
+                    type: array
+                  msg:
+                    items: {}
+                    type: array
+                  type:
+                    enum:
+                      - success
+                      - danger
+                      - error
+                    type: string
+                type: object
+          description: OK
+          headers: {}
+      tags:
+        - Mailboxes
+      description: >-
+        You can update one or more mailboxes per request. You can also send just
+        attributes you want to change
+      operationId: Update mailbox
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example:
+                attr:
+                  active: "1"
+                  force_pw_update: "0"
+                  name: Full name
+                  password: ""
+                  password2: ""
+                  quota: "3072"
+                  sender_acl:
+                    - default
+                    - info@domain2.tld
+                    - domain3.tld
+                    - "*"
+                  sogo_access: "1"
+                  tags: ["tag3", "tag4"]
+                items:
+                  - info@domain.tld
+              properties:
+                attr:
+                  properties:
+                    active:
+                      description: is mailbox active or not
+                      type: boolean
+                    force_pw_update:
+                      description: force user to change password on next login
+                      type: boolean
+                    name:
+                      description: Full name of the mailbox user
+                      type: string
+                    password2:
+                      description: new mailbox password for confirmation
+                      type: string
+                    password:
+                      description: new mailbox password
+                      type: string
+                    quota:
+                      description: mailbox quota
+                      type: number
+                    sender_acl:
+                      description: list of allowed send from addresses
+                      type: object
+                    sogo_access:
+                      description: is access to SOGo webmail active or not
+                      type: boolean
+                  type: object
+                items:
+                  description: contains list of mailboxes you want update
+                  type: object
+              type: object
+      summary: Update mailbox
+
+  "/api/v1/get/mailbox/{id}":
+    get:
+      parameters:
+        - description: id of entry you want to get
+          example: all
+          in: path
+          name: id
+          required: true
+          schema:
+            description: 'write "all" for get all users'
+            type: string
+        - description: comma seperated list of tags to filter by
+          example: "tag1,tag2"
+          in: query
+          name: tags
+          required: false
+          schema:
+            type: string
+        - description: e.g. api-key-string
+          example: api-key-string
+          in: header
+          name: X-API-Key
+          required: false
+          schema:
+            type: string
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "200":
+          content:
+            application/json:
+              examples:
+                response:
+                  value:
+                    - active: "1"
+                      attributes:
+                        force_pw_update: "0"
+                        mailbox_format: "maildir:"
+                        quarantine_notification: never
+                        sogo_access: "1"
+                        tls_enforce_in: "0"
+                        tls_enforce_out: "0"
+                      domain: doman3.tld
+                      is_relayed: 0
+                      local_part: info
+                      max_new_quota: 10737418240
+                      messages: 0
+                      name: Full name
+                      percent_class: success
+                      percent_in_use: 0
+                      quota: 3221225472
+                      quota_used: 0
+                      rl: false
+                      spam_aliases: 0
+                      username: info@doman3.tld
+                      tags: ["tag1", "tag2"]
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    active:
+                      type: string
+                    attributes:
+                      type: object
+                      properties:
+                        force_pw_update:
+                          type: string
+                        mailbox_format:
+                          type: string
+                        quarantine_notification:
+                          type: string
+                        sogo_access:
+                          type: string
+                        tls_enforce_in:
+                          type: string
+                        tls_enforce_out:
+                          type: string
+                    domain:
+                      type: string
+                    is_relayed:
+                      type: number
+                    local_part:
+                      type: string
+                    max_new_quota:
+                      type: number
+                    messages:
+                      type: number
+                    name:
+                      type: string
+                    percent_class:
+                      type: string
+                    percent_in_use:
+                      type: number
+                    quota:
+                      type: number
+                    quota_used:
+                      type: number
+                    rl:
+                      type: boolean
+                    spam_aliases:
+                      type: number
+                    username:
+                      type: string
+                    tags:
+                      type: array
+                      items:
+                        type: string
+
+          description: OK
+          headers: {}
+      tags:
+        - Mailboxes
+      description: You can list all mailboxes existing in system.
+      operationId: Get mailboxes
+      summary: Get mailboxes
+
+  "/api/v1/get/mailbox/all/{domain}":
+    get:
+      parameters:
+        - description: name of domain
+          in: path
+          name: domain
+          required: true
+          schema:
+            type: string
+        - description: e.g. api-key-string
+          example: api-key-string
+          in: header
+          name: X-API-Key
+          required: false
+          schema:
+            type: string
+      responses:
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "200":
+          content:
+            application/json:
+              examples:
+                response:
+                  value:
+                    - active: "1"
+                      attributes:
+                        force_pw_update: "0"
+                        mailbox_format: "maildir:"
+                        quarantine_notification: never
+                        sogo_access: "1"
+                        tls_enforce_in: "0"
+                        tls_enforce_out: "0"
+                      domain: domain3.tld
+                      is_relayed: 0
+                      local_part: info
+                      max_new_quota: 10737418240
+                      messages: 0
+                      name: Full name
+                      percent_class: success
+                      percent_in_use: 0
+                      quota: 3221225472
+                      quota_used: 0
+                      rl: false
+                      spam_aliases: 0
+                      username: info@domain3.tld
+                      tags: ["tag1", "tag2"]
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    active:
+                      type: string
+                    attributes:
+                      type: object
+                      properties:
+                        force_pw_update:
+                          type: string
+                        mailbox_format:
+                          type: string
+                        quarantine_notification:
+                          type: string
+                        sogo_access:
+                          type: string
+                        tls_enforce_in:
+                          type: string
+                        tls_enforce_out:
+                          type: string
+                    domain:
+                      type: string
+                    is_relayed:
+                      type: number
+                    local_part:
+                      type: string
+                    max_new_quota:
+                      type: number
+                    messages:
+                      type: number
+                    name:
+                      type: string
+                    percent_class:
+                      type: string
+                    percent_in_use:
+                      type: number
+                    quota:
+                      type: number
+                    quota_used:
+                      type: number
+                    rl:
+                      type: boolean
+                    spam_aliases:
+                      type: number
+                    username:
+                      type: string
+                    tags:
+                      type: array
+                      items:
+                        type: string
+
+          description: OK
+          headers: {}
+      tags:
+        - Mailboxes
+      description: You can list all mailboxes existing in system for a specific domain.
+      operationId: Get mailboxes of a domain
+      summary: Get mailboxes of a domain
+
+tags:
+  - name: Mailboxes
+    description: You can manage mailboxes
